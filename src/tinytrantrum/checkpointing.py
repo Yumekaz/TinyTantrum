@@ -17,6 +17,7 @@ def save_checkpoint(
     step: int,
     best_validation_loss: float | None,
     metadata: dict[str, Any] | None = None,
+    data_generator: torch.Generator | None = None,
 ) -> None:
     """Save everything needed to continue a run deterministically."""
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -28,6 +29,7 @@ def save_checkpoint(
         "python_rng": random.getstate(),
         "torch_rng": torch.get_rng_state(),
         "cuda_rng": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None,
+        "data_rng": data_generator.get_state() if data_generator is not None else None,
         "metadata": metadata or {},
     }
     temporary = path.with_suffix(path.suffix + ".tmp")
@@ -41,6 +43,7 @@ def load_checkpoint(
     optimizer: torch.optim.Optimizer,
     *,
     device: torch.device | str = "cpu",
+    data_generator: torch.Generator | None = None,
 ) -> dict[str, Any]:
     if not path.exists():
         raise FileNotFoundError(path)
@@ -51,6 +54,8 @@ def load_checkpoint(
     torch.set_rng_state(state["torch_rng"])
     if torch.cuda.is_available() and state["cuda_rng"] is not None:
         torch.cuda.set_rng_state_all(state["cuda_rng"])
+    if data_generator is not None and state.get("data_rng") is not None:
+        data_generator.set_state(state["data_rng"])
     return {
         "step": int(state["step"]),
         "best_validation_loss": state["best_validation_loss"],

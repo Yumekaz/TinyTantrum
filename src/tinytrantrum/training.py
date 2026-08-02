@@ -3,11 +3,13 @@ from __future__ import annotations
 import math
 import random
 from dataclasses import dataclass
+from pathlib import Path
 
 import torch
 from torch import Tensor
 
 from .model import CharacterTransformer
+from .checkpointing import load_checkpoint, save_checkpoint
 
 
 @dataclass(frozen=True)
@@ -102,4 +104,61 @@ def train_steps(
             metrics["step"] = float(step + 1)
             metrics["learning_rate"] = learning_rate(step, config)
             history.append(metrics)
+    return history
+
+
+def train_resumable(
+    model: CharacterTransformer,
+    train_data: Tensor,
+    validation_data: Tensor,
+    total_steps: int,
+    config: TrainingConfig,
+    checkpoint_path: Path,
+    *,
+    checkpoint_interval: int = 100,
+    device: torch.device | None = None,
+    resume: bool = False,
+) -> list[dict[str, float]]:
+    """Train to total_steps, optionally restoring all state from a checkpoint."""
+    device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate, betas=(0.9, 0.99))
+    generator = torch.Generator().manual_seed(config.seed)
+    start_step = 0
+    best_validation_loss = None
+    if resume:
+        restored = load_checkpoint(checkpoint_path, model, optimizer, device=device, data_generator=generator)
+        start_step = restored["step"]
+        best_validation_loss = restored["best_validation_loss"]
+        if start_step > total_steps:
+            raise ValueError("Checkpoint step is greater than total_steps")
+    history: list[dict[str, float]] = []
+    model.train()
+    for step in range(start_step, total_steps):
+        inputs, targets = sample_batch(train_data, config, device, generator)
+        _, loss = model(inputs, targets)
+        assert loss is not None
+        optimizer.zero_grad(set_to_none=True)
+        loss.backward()
+        current_lr = learning_rate(step, config)
+        optimizer.param_groups[0]["lr"] = current_lr
+        optimizer.step()
+        current_step = step + 1
+        if current_step == total_steps or current_step % config.validation_interval == 0:
+            metrics = estimate_loss(model, train_data, validation_data, config, device)
+            metrics["step"] = float(current_step)
+            metrics["learning_rate"] = current_lr
+            history.append(metrics)
+            if best_validation_loss is None or metrics["validation"] < best_validation_loss:
+                best_validation_loss = metrics["validation"]
+        if current_step % checkpoint_interval == 0 or current_step == total_steps:
+            save_checkpoint(
+                checkpoint_path,
+                model,
+                optimizer,
+                step=current_step,
+                best_validation_loss=best_validation_loss,
+                metadata={"training_config": config.__dict__},
+                data_generator=generator,
+            )
     return history
