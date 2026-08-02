@@ -69,7 +69,8 @@ class CausalSelfAttention(nn.Module):
         self.key = Linear(config.embedding_size, config.embedding_size)
         self.value = Linear(config.embedding_size, config.embedding_size)
         self.output = Linear(config.embedding_size, config.embedding_size)
-        self.dropout = nn.Dropout(config.dropout)
+        self.attention_dropout = nn.Dropout(config.dropout)
+        self.residual_dropout = nn.Dropout(config.dropout)
         self.use_flash_attention = config.use_flash_attention
         mask = torch.tril(torch.ones(config.context_length, config.context_length))
         self.register_buffer("causal_mask", mask.view(1, 1, config.context_length, config.context_length))
@@ -84,16 +85,16 @@ class CausalSelfAttention(nn.Module):
                 queries,
                 keys,
                 values,
-                dropout_p=self.dropout.p if self.training else 0.0,
+                dropout_p=self.attention_dropout.p if self.training else 0.0,
                 is_causal=True,
             )
         else:
             scores = queries @ keys.transpose(-2, -1) / math.sqrt(self.head_size)
             scores = scores.masked_fill(self.causal_mask[:, :, :length, :length] == 0, float("-inf"))
             weights = F.softmax(scores, dim=-1)
-            attended = self.dropout(weights) @ values
+            attended = self.attention_dropout(weights) @ values
         attended = attended.transpose(1, 2).contiguous().view(batch, length, channels)
-        return self.output(attended)
+        return self.residual_dropout(self.output(attended))
 
 
 class FeedForward(nn.Module):
