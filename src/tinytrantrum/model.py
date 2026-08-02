@@ -16,6 +16,7 @@ class ModelConfig:
     heads: int = 6
     embedding_size: int = 384
     dropout: float = 0.2
+    use_flash_attention: bool = True
 
     def __post_init__(self) -> None:
         if self.vocabulary_size <= 0:
@@ -69,6 +70,7 @@ class CausalSelfAttention(nn.Module):
         self.value = Linear(config.embedding_size, config.embedding_size)
         self.output = Linear(config.embedding_size, config.embedding_size)
         self.dropout = nn.Dropout(config.dropout)
+        self.use_flash_attention = config.use_flash_attention
         mask = torch.tril(torch.ones(config.context_length, config.context_length))
         self.register_buffer("causal_mask", mask.view(1, 1, config.context_length, config.context_length))
 
@@ -77,10 +79,19 @@ class CausalSelfAttention(nn.Module):
         queries = self.query(inputs).view(batch, length, self.heads, self.head_size).transpose(1, 2)
         keys = self.key(inputs).view(batch, length, self.heads, self.head_size).transpose(1, 2)
         values = self.value(inputs).view(batch, length, self.heads, self.head_size).transpose(1, 2)
-        scores = queries @ keys.transpose(-2, -1) / math.sqrt(self.head_size)
-        scores = scores.masked_fill(self.causal_mask[:, :, :length, :length] == 0, float("-inf"))
-        weights = F.softmax(scores, dim=-1)
-        attended = self.dropout(weights) @ values
+        if self.use_flash_attention and hasattr(F, "scaled_dot_product_attention"):
+            attended = F.scaled_dot_product_attention(
+                queries,
+                keys,
+                values,
+                dropout_p=self.dropout.p if self.training else 0.0,
+                is_causal=True,
+            )
+        else:
+            scores = queries @ keys.transpose(-2, -1) / math.sqrt(self.head_size)
+            scores = scores.masked_fill(self.causal_mask[:, :, :length, :length] == 0, float("-inf"))
+            weights = F.softmax(scores, dim=-1)
+            attended = self.dropout(weights) @ values
         attended = attended.transpose(1, 2).contiguous().view(batch, length, channels)
         return self.output(attended)
 
@@ -120,6 +131,11 @@ class CharacterTransformer(nn.Module):
         self.blocks = nn.ModuleList([TransformerBlock(config) for _ in range(config.layers)])
         self.final_norm = LayerNorm(config.embedding_size)
         self.lm_head = Linear(config.embedding_size, config.vocabulary_size, bias=False)
+        self.lm_head.weight = self.token_embedding.weight
+        residual_std = 0.02 / math.sqrt(2 * config.layers)
+        for block in self.blocks:
+            nn.init.normal_(block.attention.output.weight, mean=0.0, std=residual_std)
+            nn.init.normal_(block.feed_forward.down.weight, mean=0.0, std=residual_std)
 
     def forward(self, tokens: Tensor, targets: Tensor | None = None) -> tuple[Tensor, Tensor | None]:
         _, length = tokens.shape

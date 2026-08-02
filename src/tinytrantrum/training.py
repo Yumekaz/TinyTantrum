@@ -20,6 +20,10 @@ class TrainingConfig:
     context_length: int = 256
     learning_rate: float = 1e-3
     min_learning_rate: float = 1e-4
+    weight_decay: float = 0.1
+    beta1: float = 0.9
+    beta2: float = 0.99
+    gradient_clip: float = 1.0
     warmup_steps: int = 100
     decay_steps: int = 5_000
     validation_interval: int = 250
@@ -37,7 +41,7 @@ def seed_everything(seed: int) -> None:
 
 def learning_rate(step: int, config: TrainingConfig) -> float:
     if step < config.warmup_steps:
-        return config.learning_rate * (step + 1) / max(1, config.warmup_steps)
+        return config.learning_rate * (step + 1) / (config.warmup_steps + 1)
     if step >= config.decay_steps:
         return config.min_learning_rate
     progress = (step - config.warmup_steps) / max(1, config.decay_steps - config.warmup_steps)
@@ -80,6 +84,24 @@ def estimate_loss(
     return results
 
 
+def build_optimizer(model: CharacterTransformer, config: TrainingConfig) -> torch.optim.Optimizer:
+    """Match nanoGPT's AdamW grouping: decay matrix weights, not biases/norms."""
+    decay_parameters = []
+    no_decay_parameters = []
+    for parameter in model.parameters():
+        if not parameter.requires_grad:
+            continue
+        (decay_parameters if parameter.ndim >= 2 else no_decay_parameters).append(parameter)
+    return torch.optim.AdamW(
+        [
+            {"params": decay_parameters, "weight_decay": config.weight_decay},
+            {"params": no_decay_parameters, "weight_decay": 0.0},
+        ],
+        lr=config.learning_rate,
+        betas=(config.beta1, config.beta2),
+    )
+
+
 def train_steps(
     model: CharacterTransformer,
     train_data: Tensor,
@@ -90,7 +112,7 @@ def train_steps(
 ) -> list[dict[str, float]]:
     device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate, betas=(0.9, 0.99))
+    optimizer = build_optimizer(model, config)
     generator = torch.Generator().manual_seed(config.seed)
     history: list[dict[str, float]] = []
     model.train()
@@ -100,6 +122,8 @@ def train_steps(
         assert loss is not None
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
+        if config.gradient_clip:
+            torch.nn.utils.clip_grad_norm_(model.parameters(), config.gradient_clip)
         optimizer.param_groups[0]["lr"] = learning_rate(step, config)
         optimizer.step()
         if step == 0 or (step + 1) % config.validation_interval == 0 or step == steps - 1:
@@ -126,7 +150,7 @@ def train_resumable(
     """Train to total_steps, optionally restoring all state from a checkpoint."""
     device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate, betas=(0.9, 0.99))
+    optimizer = build_optimizer(model, config)
     generator = torch.Generator().manual_seed(config.seed)
     start_step = 0
     best_validation_loss = None
@@ -145,6 +169,8 @@ def train_resumable(
         assert loss is not None
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
+        if config.gradient_clip:
+            torch.nn.utils.clip_grad_norm_(model.parameters(), config.gradient_clip)
         current_lr = learning_rate(step, config)
         optimizer.param_groups[0]["lr"] = current_lr
         optimizer.step()
