@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 import sys
+import time
 
 import torch
 
@@ -31,6 +32,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--metrics", type=Path, default=Path("runs/metrics.json"))
     parser.add_argument("--checkpoint-interval", type=int, default=250)
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--log-interval", type=int, default=50)
     return parser.parse_args()
 
 
@@ -55,9 +57,26 @@ def main() -> None:
         batch_size=args.batch_size,
         context_length=args.context_length,
         seed=args.seed,
+        log_interval=args.log_interval,
     )
     model = CharacterTransformer(model_config)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    started_at = time.perf_counter()
+
+    def report(progress: dict[str, float]) -> None:
+        fields = [
+            f"step={int(progress['step'])}/{args.steps}",
+            f"batch_loss={progress['train_batch_loss']:.4f}",
+        ]
+        if "train_loss" in progress:
+            fields.extend([
+                f"train={progress['train_loss']:.4f}",
+                f"validation={progress['validation_loss']:.4f}",
+            ])
+        fields.append(f"lr={progress['learning_rate']:.2e}")
+        fields.append(f"elapsed={time.perf_counter() - started_at:.1f}s")
+        print(" | ".join(fields), flush=True)
+
     history = train_resumable(
         model,
         train_data,
@@ -68,6 +87,7 @@ def main() -> None:
         checkpoint_interval=args.checkpoint_interval,
         device=device,
         resume=args.resume,
+        progress_callback=report,
     )
     args.metrics.parent.mkdir(parents=True, exist_ok=True)
     args.metrics.write_text(json.dumps(history, indent=2), encoding="utf-8")

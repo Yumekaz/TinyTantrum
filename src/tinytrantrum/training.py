@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import math
 import random
+import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
 
 import torch
 from torch import Tensor
@@ -23,6 +25,7 @@ class TrainingConfig:
     validation_interval: int = 250
     validation_batches: int = 20
     seed: int = 1337
+    log_interval: int = 50
 
 
 def seed_everything(seed: int) -> None:
@@ -118,6 +121,7 @@ def train_resumable(
     checkpoint_interval: int = 100,
     device: torch.device | None = None,
     resume: bool = False,
+    progress_callback: Callable[[dict[str, float]], None] | None = None,
 ) -> list[dict[str, float]]:
     """Train to total_steps, optionally restoring all state from a checkpoint."""
     device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -133,6 +137,7 @@ def train_resumable(
         if start_step > total_steps:
             raise ValueError("Checkpoint step is greater than total_steps")
     history: list[dict[str, float]] = []
+    started_at = time.perf_counter()
     model.train()
     for step in range(start_step, total_steps):
         inputs, targets = sample_batch(train_data, config, device, generator)
@@ -144,13 +149,22 @@ def train_resumable(
         optimizer.param_groups[0]["lr"] = current_lr
         optimizer.step()
         current_step = step + 1
+        progress = {
+            "step": float(current_step),
+            "train_batch_loss": float(loss.item()),
+            "learning_rate": current_lr,
+            "elapsed_seconds": time.perf_counter() - started_at,
+        }
         if current_step == total_steps or current_step % config.validation_interval == 0:
             metrics = estimate_loss(model, train_data, validation_data, config, device)
             metrics["step"] = float(current_step)
             metrics["learning_rate"] = current_lr
             history.append(metrics)
+            progress.update({"train_loss": metrics["train"], "validation_loss": metrics["validation"]})
             if best_validation_loss is None or metrics["validation"] < best_validation_loss:
                 best_validation_loss = metrics["validation"]
+        if progress_callback and (current_step % config.log_interval == 0 or current_step == total_steps):
+            progress_callback(progress)
         if current_step % checkpoint_interval == 0 or current_step == total_steps:
             save_checkpoint(
                 checkpoint_path,
