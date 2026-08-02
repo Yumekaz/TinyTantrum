@@ -5,6 +5,7 @@ from pathlib import Path
 from urllib.request import urlopen
 
 from .config import RunConfig
+from .tokenizer import CharacterTokenizer
 
 
 def sha256(path: Path) -> str:
@@ -37,3 +38,17 @@ def vocabulary(text: str) -> tuple[list[str], dict[str, int], dict[int, str]]:
     stoi = {char: index for index, char in enumerate(chars)}
     itos = {index: char for char, index in stoi.items()}
     return chars, stoi, itos
+
+
+def split_text(text: str, train_fraction: float = 0.9) -> tuple[str, str]:
+    if not 0.0 < train_fraction < 1.0:
+        raise ValueError("train_fraction must be between 0 and 1")
+    split_index = int(len(text) * train_fraction)
+    if split_index == 0 or split_index == len(text):
+        raise ValueError("Text is too short for the requested split")
+    return text[:split_index], text[split_index:]
+
+
+def encode_corpus(text: str) -> tuple[CharacterTokenizer, list[int]]:
+    tokenizer = CharacterTokenizer.from_text(text)
+    return tokenizer, tokenizer.encode(text)
