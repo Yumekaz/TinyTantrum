@@ -75,12 +75,13 @@ class CausalSelfAttention(nn.Module):
         mask = torch.tril(torch.ones(config.context_length, config.context_length))
         self.register_buffer("causal_mask", mask.view(1, 1, config.context_length, config.context_length))
 
-    def forward(self, inputs: Tensor) -> Tensor:
+    def forward(self, inputs: Tensor, return_weights: bool = False) -> Tensor | tuple[Tensor, Tensor]:
         batch, length, channels = inputs.shape
         queries = self.query(inputs).view(batch, length, self.heads, self.head_size).transpose(1, 2)
         keys = self.key(inputs).view(batch, length, self.heads, self.head_size).transpose(1, 2)
         values = self.value(inputs).view(batch, length, self.heads, self.head_size).transpose(1, 2)
-        if self.use_flash_attention and hasattr(F, "scaled_dot_product_attention"):
+        weights = None
+        if self.use_flash_attention and not return_weights and hasattr(F, "scaled_dot_product_attention"):
             attended = F.scaled_dot_product_attention(
                 queries,
                 keys,
@@ -94,7 +95,8 @@ class CausalSelfAttention(nn.Module):
             weights = F.softmax(scores, dim=-1)
             attended = self.attention_dropout(weights) @ values
         attended = attended.transpose(1, 2).contiguous().view(batch, length, channels)
-        return self.residual_dropout(self.output(attended))
+        output = self.residual_dropout(self.output(attended))
+        return (output, weights) if return_weights else output
 
 
 class FeedForward(nn.Module):
@@ -117,9 +119,16 @@ class TransformerBlock(nn.Module):
         self.norm_feed_forward = LayerNorm(config.embedding_size)
         self.feed_forward = FeedForward(config)
 
-    def forward(self, inputs: Tensor) -> Tensor:
-        inputs = inputs + self.attention(self.norm_attention(inputs))
-        return inputs + self.feed_forward(self.norm_feed_forward(inputs))
+    def forward(self, inputs: Tensor, return_weights: bool = False) -> Tensor | tuple[Tensor, Tensor]:
+        attention_result = self.attention(self.norm_attention(inputs), return_weights=return_weights)
+        if return_weights:
+            attention_output, weights = attention_result
+            inputs = inputs + attention_output
+        else:
+            inputs = inputs + attention_result
+            weights = None
+        output = inputs + self.feed_forward(self.norm_feed_forward(inputs))
+        return (output, weights) if return_weights else output
 
 
 class CharacterTransformer(nn.Module):
@@ -138,16 +147,27 @@ class CharacterTransformer(nn.Module):
             nn.init.normal_(block.attention.output.weight, mean=0.0, std=residual_std)
             nn.init.normal_(block.feed_forward.down.weight, mean=0.0, std=residual_std)
 
-    def forward(self, tokens: Tensor, targets: Tensor | None = None) -> tuple[Tensor, Tensor | None]:
+    def forward(
+        self,
+        tokens: Tensor,
+        targets: Tensor | None = None,
+        return_attention: bool = False,
+    ) -> tuple[Tensor, Tensor | None] | tuple[Tensor, Tensor | None, list[Tensor]]:
         _, length = tokens.shape
         if length > self.config.context_length:
             raise ValueError("Sequence length exceeds context_length")
         positions = torch.arange(length, device=tokens.device)
         hidden = self.dropout(self.token_embedding(tokens) + self.position_embedding(positions))
+        attention_maps: list[Tensor] = []
         for block in self.blocks:
-            hidden = block(hidden)
+            block_result = block(hidden, return_weights=return_attention)
+            if return_attention:
+                hidden, weights = block_result
+                attention_maps.append(weights)
+            else:
+                hidden = block_result
         logits = self.lm_head(self.final_norm(hidden))
         loss = None
         if targets is not None:
             loss = F.cross_entropy(logits.reshape(-1, logits.size(-1)), targets.reshape(-1))
-        return logits, loss
+        return (logits, loss, attention_maps) if return_attention else (logits, loss)

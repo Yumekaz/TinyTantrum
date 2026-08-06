@@ -8,6 +8,8 @@ import torch
 
 from tinytrantrum.model import CharacterTransformer, ModelConfig
 from tinytrantrum.generation import generate
+from tinytrantrum.interpretability import attention_for_text
+from tinytrantrum.tokenizer import CharacterTokenizer
 
 
 @pytest.fixture
@@ -58,3 +60,13 @@ def test_generation_preserves_prompt_and_length() -> None:
     output = generate(model, prompt, max_new_tokens=3, temperature=1.0)
     assert output.shape == (1, 5)
     assert torch.equal(output[:, :2], prompt)
+
+
+def test_attention_inspection_returns_one_map_per_layer() -> None:
+    model = CharacterTransformer(ModelConfig(vocabulary_size=5, context_length=8, layers=2, heads=2, embedding_size=8, dropout=0.0))
+    tokenizer = CharacterTokenizer.from_text("abcde")
+    labels, maps = attention_for_text(model, tokenizer, "abcde", torch.device("cpu"))
+    assert labels == list("abcde")
+    assert len(maps) == 2
+    assert maps[0].shape == (2, 5, 5)
+    assert torch.allclose(maps[0].sum(dim=-1), torch.ones(2, 5), atol=1e-5)

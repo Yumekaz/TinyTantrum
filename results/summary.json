@@ -1,0 +1,29 @@
+[
+  {
+    "context_length": 64,
+    "best": {
+      "train": 1.3555527925491333,
+      "validation": 1.554616355895996,
+      "step": 2000.0,
+      "learning_rate": 0.000705685003441866
+    }
+  },
+  {
+    "context_length": 128,
+    "best": {
+      "train": 1.2122849583625794,
+      "validation": 1.4857789814472198,
+      "step": 2000.0,
+      "learning_rate": 0.000705685003441866
+    }
+  },
+  {
+    "context_length": 256,
+    "best": {
+      "train": 1.095966750383377,
+      "validation": 1.475578147172928,
+      "step": 1750.0,
+      "learning_rate": 0.00077107424030427
+    }
+  }
+]
