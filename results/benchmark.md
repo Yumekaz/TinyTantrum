@@ -34,3 +34,15 @@ Three matched runs used the same model, optimizer, seed, and 2,000 training step
 The 256-character context performed best, improving validation loss by approximately 5.1% relative to context 64 and 0.7% relative to context 128. This supports the hypothesis that longer context helps this character-level model capture useful dependencies.
 
 This comparison controls training steps, not total compute or tokens processed. The result therefore shows an empirical relationship under a fixed-step budget, not a claim that context 256 is universally compute-optimal.
+
+## Multi-seed reproducibility
+
+The reference configuration was trained independently with two seeds and evaluated using 200 validation batches:
+
+| Seed | Validation loss |
+| ---: | ---: |
+| 1337 | 1.4695779 |
+| 2024 | 1.4792602 |
+| Mean | 1.4744191 |
+
+The absolute difference between runs was approximately 0.00968. Both runs remained close to the reference, providing evidence that the benchmark result is not dependent on one unusually favorable initialization.
