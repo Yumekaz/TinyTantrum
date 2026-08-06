@@ -7,6 +7,7 @@ import pytest
 import torch
 
 from tinytrantrum.model import CharacterTransformer, ModelConfig
+from tinytrantrum.generation import generate
 
 
 @pytest.fixture
@@ -49,3 +50,11 @@ def test_manual_attention_fallback_matches_forward() -> None:
     logits, loss = model(tokens, tokens)
     assert logits.shape == (1, 5, 11)
     assert loss is not None and torch.isfinite(loss)
+
+
+def test_generation_preserves_prompt_and_length() -> None:
+    model = CharacterTransformer(ModelConfig(vocabulary_size=5, context_length=4, layers=1, heads=1, embedding_size=4, dropout=0.0))
+    prompt = torch.tensor([[1, 2]])
+    output = generate(model, prompt, max_new_tokens=3, temperature=1.0)
+    assert output.shape == (1, 5)
+    assert torch.equal(output[:, :2], prompt)
