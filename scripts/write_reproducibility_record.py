@@ -113,6 +113,7 @@ def build_record(args: argparse.Namespace) -> dict[str, Any]:
     model = CharacterTransformer(model_config)
     full_metrics = load_json(args.metrics)
     seed_metrics = load_json(args.seed_metrics)
+    architecture_ablation = load_json(ROOT / "results" / "architecture_ablation.json")
     dataset_hash = sha256(dataset_path)
 
     return {
@@ -164,6 +165,7 @@ def build_record(args: argparse.Namespace) -> dict[str, Any]:
                 "batches": 200,
                 "validation_loss": 1.4695779329538345,
             },
+            "architecture_ablation": architecture_ablation,
         },
         "environment_snapshot": {
             "scope": "environment where this record was generated; historical training hardware was not serialized",
@@ -189,10 +191,27 @@ def render_report(record: dict[str, Any]) -> str:
     reference = record["results"]["reference"]
     independent = record["results"]["independent_seed"]
     evaluation = record["results"]["reference_evaluation"]
+    architecture = record["results"].get("architecture_ablation")
     environment = record["environment_snapshot"]
+    architecture_section = ""
+    if architecture:
+        with_position = architecture["variants"]["with_position"]
+        without_position = architecture["variants"]["without_position"]
+        architecture_section = f"""
+## Architectural ablation
+
+Question: does learned positional information improve validation performance?
+
+- Shared setup: {architecture['steps']} steps, batch size {architecture['batch_size']}, context {architecture['context_length']}, seed {architecture['seed']}
+- With positions: `{with_position['validation_loss']:.7f}` over {architecture['evaluation_batches']} evaluation batches
+- Without positions: `{without_position['validation_loss']:.7f}` over {architecture['evaluation_batches']} evaluation batches
+- Difference: `{without_position['validation_loss'] - with_position['validation_loss']:+.7f}` validation loss without positions
+
+The result supports the conclusion that learned positional information materially helps this character-level model. The comparison is specific to this seed, dataset, architecture, and 2,000-step budget.
+"""
     return f"""# TinyTantrum reproducibility and release record
 
-Source commit: `{record['source_commit'] or 'unavailable'}`  
+Source commit: `{record['source_commit'] or 'unavailable'}`
 Record version: `{record['record_version']}`
 
 ## Dataset
@@ -221,6 +240,7 @@ Record version: `{record['record_version']}`
 - Independent 200-batch evaluation: `{evaluation['validation_loss']:.7f}`
 - Independent seed best estimate: `{independent['validation_loss']:.7f}` at step `{independent['step']}`
 - Benchmark target: `1.4697`
+{architecture_section}
 
 ## Record-generation environment
 
@@ -256,8 +276,8 @@ def main() -> None:
     record = build_record(args)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.report.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
-    args.report.write_text(render_report(record), encoding="utf-8")
+    args.output.write_bytes((json.dumps(record, indent=2) + "\n").encode("utf-8"))
+    args.report.write_bytes(render_report(record).encode("utf-8"))
     print(f"Wrote {args.output} and {args.report}")
 
 

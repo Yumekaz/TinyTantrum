@@ -46,3 +46,14 @@ The reference configuration was trained independently with two seeds and evaluat
 | Mean | 1.4744191 |
 
 The absolute difference between runs was approximately 0.00968. Both runs remained close to the reference, providing evidence that the benchmark result is not dependent on one unusually favorable initialization.
+
+## Architectural ablation: positional information
+
+The second controlled experiment changed only whether learned positional embeddings were present. Both variants used seed 1337, 2,000 steps, batch size 64, context length 256, six layers, six heads, 384-dimensional embeddings, and dropout 0.2. Each best checkpoint was then evaluated independently with 200 validation batches.
+
+| Variant | Parameters | Best training estimate | Independent validation loss |
+| --- | ---: | ---: | ---: |
+| With learned positional embeddings | 10,770,816 | 1.4659035 | **1.4626713** |
+| Without positional embeddings | 10,672,512 | 1.5659260 | **1.5620605** |
+
+Removing positional embeddings increased validation loss by **0.0993892**, approximately **6.8%** relative to the positional variant. Under this controlled budget, positional information materially improves character-level modeling. This conclusion is specific to the recorded seed, dataset, architecture, and 2,000-step budget.

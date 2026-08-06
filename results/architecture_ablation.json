@@ -1,0 +1,30 @@
+{
+  "question": "Does learned positional information improve character-level validation performance?",
+  "evidence_source": "Independent Colab training and 200-batch evaluation output",
+  "steps": 2000,
+  "batch_size": 64,
+  "context_length": 256,
+  "layers": 6,
+  "heads": 6,
+  "embedding_size": 384,
+  "dropout": 0.2,
+  "seed": 1337,
+  "evaluation_batches": 200,
+  "variants": {
+    "with_position": {
+      "parameters": 10770816,
+      "training_best_validation_loss": 1.4659035205841064,
+      "training_best_step": 1750,
+      "validation_loss": 1.4626712894439697,
+      "training_loss": 1.0845860147476196
+    },
+    "without_position": {
+      "parameters": 10672512,
+      "training_best_validation_loss": 1.5659260332584382,
+      "training_best_step": 2000,
+      "validation_loss": 1.562060461640358,
+      "training_loss": 1.2751868569850922
+    }
+  },
+  "interpretation": "Removing learned positional embeddings increased validation loss by 0.0993892, approximately 6.8 percent relative to the positional variant."
+}

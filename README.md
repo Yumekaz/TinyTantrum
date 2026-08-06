@@ -25,6 +25,8 @@ The context-length ablation also showed a clear trend under a fixed 2,000-step b
 
 See the detailed evidence in [results/benchmark.md](results/benchmark.md).
 
+The architectural ablation also produced a clear result under the same controlled setup: the positional model reached **1.4626713** on an independent 200-batch evaluation, while removing positional embeddings reached **1.5620605**. The approximately **6.8%** gap supports the conclusion that positional information materially helps this character-level model.
+
 The reproducibility record is regenerated with:
 
 ```powershell

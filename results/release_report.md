@@ -1,6 +1,6 @@
 # TinyTantrum reproducibility and release record
 
-Source commit: `925187376dd3dc9cf6232a2f56eabc3d1c037df2`  
+Source commit: `e6c52f4e71a574a489dd3e4e3044e26f8e96b8f7`
 Record version: `1`
 
 ## Dataset
@@ -29,6 +29,18 @@ Record version: `1`
 - Independent 200-batch evaluation: `1.4695779`
 - Independent seed best estimate: `1.4847314` at step `1500`
 - Benchmark target: `1.4697`
+
+## Architectural ablation
+
+Question: does learned positional information improve validation performance?
+
+- Shared setup: 2000 steps, batch size 64, context 256, seed 1337
+- With positions: `1.4626713` over 200 evaluation batches
+- Without positions: `1.5620605` over 200 evaluation batches
+- Difference: `+0.0993892` validation loss without positions
+
+The result supports the conclusion that learned positional information materially helps this character-level model. The comparison is specific to this seed, dataset, architecture, and 2,000-step budget.
+
 
 ## Record-generation environment
 
