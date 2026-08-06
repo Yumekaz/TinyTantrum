@@ -66,6 +66,38 @@ footer { display: none !important; }
 code, pre { font-family: 'DM Mono', monospace !important; }
 """
 
+RESPONSIVE_STYLE_HTML = """
+<style>
+  #metric-grid, .metric-grid { min-width: 0 !important; }
+  .generate-layout, .sampling-controls { min-width: 0 !important; }
+  .generate-layout > *, .sampling-controls > * { min-width: 0 !important; }
+  .generate-layout .panel { min-width: 0 !important; overflow: hidden !important; }
+  .sampling-controls .wrap, .sampling-controls .slider_input_container { min-width: 0 !important; width: 100% !important; }
+  .sampling-controls input[type='range'] { min-width: 0 !important; }
+
+  @media (max-width: 900px) {
+    .gradio-container { padding: 18px 14px 36px !important; }
+    #hero { padding: 26px 24px; border-radius: 20px; }
+    #hero p { font-size: 15px; line-height: 1.7; }
+    #metric-grid { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px !important; }
+    #metric-grid > * { min-width: 0 !important; }
+    .metric-card { min-width: 0; padding: 14px 16px; }
+    .metric-value { font-size: 24px; }
+    .generate-layout { display: flex !important; flex-direction: column !important; gap: 14px !important; }
+    .generate-layout > * { width: 100% !important; flex: none !important; }
+    .sampling-controls { display: grid !important; grid-template-columns: 1fr !important; gap: 8px !important; }
+    .sampling-controls > * { width: 100% !important; }
+  }
+
+  @media (max-width: 460px) {
+    #hero { padding: 22px 18px; }
+    .hero-mark { width: 84px; height: 84px; }
+    .metric-card { padding: 12px; }
+    .metric-value { font-size: 21px; }
+  }
+</style>
+"""
+
 HERO_HTML = """
 <div id="hero">
   <div class="hero-mark"></div>
@@ -173,6 +205,7 @@ def build_demo():
 
     with gr.Blocks(title="TinyTantrum · Research Console") as demo:
         gr.HTML(HERO_HTML)
+        gr.HTML(RESPONSIVE_STYLE_HTML)
         with gr.Row(elem_id="metric-grid"):
             gr.HTML(METRIC_HTML)
             gr.HTML(METRIC_REFERENCE_HTML)
@@ -181,11 +214,11 @@ def build_demo():
         with gr.Tabs():
             with gr.Tab("Generate", id="generate"):
                 gr.Markdown("## Sample from a trained checkpoint", elem_classes="section-note")
-                with gr.Row():
+                with gr.Row(elem_classes="generate-layout"):
                     with gr.Column(scale=5, elem_classes="panel"):
                         prompt = gr.Textbox(value="ROMEO:", label="Prompt", lines=3, placeholder="Give the model a character-level opening...")
                         checkpoint = gr.Dropdown(choices=choices, value=default_checkpoint, label="Checkpoint")
-                        with gr.Row():
+                        with gr.Row(elem_classes="sampling-controls"):
                             token_count = gr.Slider(20, 800, value=300, step=10, label="New characters")
                             temperature = gr.Slider(0.2, 1.5, value=0.8, step=0.05, label="Temperature")
                             top_k = gr.Slider(1, 65, value=20, step=1, label="Top-k")

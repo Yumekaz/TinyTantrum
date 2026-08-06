@@ -7,3 +7,6 @@ data/*
 !data/.gitkeep
 artifacts/
 results/*.pt
+.mplconfig/
+dashboard*.log
+src/*.egg-info/
