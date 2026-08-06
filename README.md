@@ -1,21 +1,40 @@
 # TinyTantrum
 
-TinyTantrum is a reproducible, from-scratch character-level GPT laboratory. It implements the tokenizer, transformer blocks, causal attention, training loop, checkpoint recovery, benchmark evaluation, ablations, and generation path directly around PyTorch tensors and autograd.
+[![Tests](https://github.com/Yumekaz/TinyTantrum/actions/workflows/ci.yml/badge.svg)](https://github.com/Yumekaz/TinyTantrum/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.1%2B-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
 
-This is a flagship ML engineering and experimental research artifact: the goal is not to claim a new transformer architecture, but to make every important training decision inspectable and every result falsifiable.
+TinyTantrum is a reproducible, from-scratch character-level GPT laboratory. It implements the tokenizer, transformer blocks, causal attention, training loop, checkpoint recovery, benchmark evaluation, controlled ablations, interpretability tooling, and generation path directly around PyTorch tensors and autograd.
 
-## Verified result
+The project is designed as a transparent ML engineering and experimental research artifact: every important training decision is inspectable, every result is reproducible within its stated conditions, and the limitations are explicit.
+
+![TinyTantrum dashboard](results/dashboard_screenshot.png)
+
+## Why it matters
+
+TinyTantrum is intentionally small enough to understand end to end, but complete enough to answer meaningful engineering questions:
+
+- Can a hand-built transformer reproduce a reference validation result?
+- Does the result survive an independent evaluation and a second random seed?
+- How much do context length and positional information affect performance?
+- What measurable routing patterns appear in the learned attention heads?
+
+This is not presented as a new architecture or a state-of-the-art language model. The value is in the complete, inspectable experimental system.
+
+## Verified results
 
 The reference configuration reached a validation loss of **1.4695779** using an independent 200-batch evaluation, against the reference value of approximately **1.4697**.
 
-Two independent seeds were evaluated:
+| Check | Result |
+| --- | ---: |
+| Reference validation loss | **1.4695779** |
+| Reference target | **1.4697** |
+| Independent seed validation loss | **1.4792602** |
+| Benchmark status | **PASS** |
 
-| Seed | Validation loss |
-| ---: | ---: |
-| 1337 | 1.4695779 |
-| 2024 | 1.4792602 |
+### Context-length ablation
 
-The context-length ablation also showed a clear trend under a fixed 2,000-step budget:
+Under a fixed 2,000-step budget, longer context improved validation loss:
 
 | Context length | Best validation loss |
 | ---: | ---: |
@@ -23,39 +42,11 @@ The context-length ablation also showed a clear trend under a fixed 2,000-step b
 | 128 | 1.4857790 |
 | 256 | 1.4755781 |
 
-See the detailed evidence in [results/benchmark.md](results/benchmark.md).
+### Positional-information ablation
 
-The architectural ablation also produced a clear result under the same controlled setup: the positional model reached **1.4626713** on an independent 200-batch evaluation, while removing positional embeddings reached **1.5620605**. The approximately **6.8%** gap supports the conclusion that positional information materially helps this character-level model.
+Using the same seed, architecture, dataset, and 2,000-step budget, removing learned positional embeddings increased independent validation loss from **1.4626713** to **1.5620605**—approximately a **6.8%** deterioration.
 
-The reproducibility record is regenerated with:
-
-```powershell
-python scripts\write_reproducibility_record.py
-```
-
-It writes [results/reproducibility.json](results/reproducibility.json) and
-[results/release_report.md](results/release_report.md) with dataset provenance,
-configuration, parameter count, environment facts, artifact hashes, and known
-provenance limits.
-
-Generate the attention interpretability report from the local best checkpoint:
-
-```powershell
-python scripts\generate_attention_report.py
-```
-
-This writes [results/attention/report.md](results/attention/report.md), measurable head statistics, and selected heatmaps. The report distinguishes attention behavior from semantic claims.
-
-The dashboard’s final working-state capture is [results/dashboard_screenshot.png](results/dashboard_screenshot.png).
-
-Package the large local checkpoints separately from the source repository:
-
-```powershell
-python scripts\package_artifacts.py
-```
-
-This creates `dist\tinytrantrum-checkpoints.zip`. Upload that archive as a release
-asset, then extract it so the checkpoints live under `artifacts\checkpoints\`.
+The detailed evidence is available in [results/benchmark.md](results/benchmark.md), [results/reproducibility.json](results/reproducibility.json), and [results/release_report.md](results/release_report.md).
 
 ## What is implemented
 
@@ -65,58 +56,92 @@ asset, then extract it so the checkpoints live under `artifacts\checkpoints\`.
 - Atomic checkpoints containing model, optimizer, RNG, configuration, and step state
 - Exact interrupted-vs-uninterrupted resume verification
 - Independent evaluation and autoregressive generation commands
-- Context-length ablation tooling
-- Controlled positional-embedding ablation tooling
-- Attention interpretability report generation and heatmaps
-- Optional interactive dashboard
+- Context-length and positional-embedding ablation tooling
+- Attention statistics, heatmaps, and an interpretability report
+- Interactive dashboard over the same checkpoint and generation code
+- Automated tests through GitHub Actions
 
-## Run locally
+## Reproduce locally
+
+Create an environment and run the tests:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -e ".[dev]"
 python -m pytest -q
+```
+
+For a quick CPU smoke test:
+
+```powershell
 python scripts\train_model.py --steps 20 --layers 1 --heads 2 --embedding-size 64 --context-length 64 --batch-size 8 --dropout 0
 ```
 
 The full reference run is intended for a GPU:
 
-```bash
-python scripts/train_model.py --steps 5000 --batch-size 64 --context-length 256 --layers 6 --heads 6 --embedding-size 384 --dropout 0.2 --seed 1337 --checkpoint artifacts/checkpoints/full_run.pt --metrics runs/full_run_metrics.json
+```powershell
+python scripts\train_model.py --steps 5000 --batch-size 64 --context-length 256 --layers 6 --heads 6 --embedding-size 384 --dropout 0.2 --seed 1337 --checkpoint artifacts\checkpoints\full_run.pt --metrics runs\full_run_metrics.json
 ```
 
-Evaluate a best checkpoint with the reference-style 200-batch estimate:
+Evaluate a best checkpoint:
 
-```bash
-python scripts/evaluate_model.py --checkpoint artifacts/checkpoints/full_run_best.pt --batches 200
+```powershell
+python scripts\evaluate_model.py --checkpoint artifacts\checkpoints\full_run_best.pt --batches 200
 ```
 
 Generate text:
 
-```bash
-python scripts/generate_text.py --checkpoint artifacts/checkpoints/full_run_best.pt --prompt "ROMEO:" --tokens 400 --temperature 0.8 --top-k 20
+```powershell
+python scripts\generate_text.py --checkpoint artifacts\checkpoints\full_run_best.pt --prompt "ROMEO:" --tokens 400 --temperature 0.8 --top-k 20
 ```
 
 Run the controlled architectural ablation on a GPU:
 
-```bash
-python scripts/run_architecture_ablation.py --steps 2000 --batch-size 64 --context-length 256 --layers 6 --heads 6 --embedding-size 384 --dropout 0.2 --seed 1337
+```powershell
+python scripts\run_architecture_ablation.py --steps 2000 --batch-size 64 --context-length 256 --layers 6 --heads 6 --embedding-size 384 --dropout 0.2 --seed 1337
 ```
 
-The results are written to `runs/architecture_ablation/`.
+## Checkpoints and dashboard
 
-## Dashboard
+The large `.pt` files are kept out of Git so the source repository stays lightweight. Download the checkpoint bundle from the [v0.1.0 release](https://github.com/Yumekaz/TinyTantrum/releases/tag/v0.1.0) and extract it at the repository root. The archive preserves the expected `artifacts\checkpoints\` layout.
 
-Install the optional UI dependencies:
+Then launch the dashboard:
 
-```bash
+```powershell
 python -m pip install -e ".[dashboard]"
 python scripts\dashboard.py
 ```
 
-The dashboard is a presentation layer over the same checkpoint and generation code; it is not part of the benchmark proof.
+The dashboard lets you sample from a trained checkpoint, compare benchmark evidence, and inspect attention maps. It is a presentation layer over the same model and generation code; it is not part of the benchmark proof.
+
+To package locally generated checkpoints for another release:
+
+```powershell
+python scripts\package_artifacts.py
+```
+
+This creates `dist\tinytrantrum-checkpoints.zip` with a SHA-256 manifest.
+
+## Interpretability
+
+Generate the attention report from the local best checkpoint:
+
+```powershell
+python scripts\generate_attention_report.py
+```
+
+The report is written to [results/attention/report.md](results/attention/report.md), alongside measurable head statistics and selected heatmaps. It treats attention patterns as behavioral evidence, not proof of human-interpretable semantic roles.
+
+## Project structure
+
+```text
+src/tinytrantrum/    model, tokenizer, training, checkpointing, analysis
+scripts/             training, evaluation, ablation, dashboard, reporting
+tests/               model, data, checkpoint, resume, and entrypoint tests
+results/             benchmark evidence, reports, plots, and dashboard capture
+```
 
 ## Limitations
 
-This is a small character-level model trained on Tiny Shakespeare. Generated text is qualitative evidence only. The context ablation controls training steps rather than equal compute, and the project does not claim a novel architecture or state-of-the-art language modeling result.
+This is a small character-level model trained on Tiny Shakespeare. Generated text is qualitative evidence only. The context ablation controls training steps rather than equal compute. The project does not claim a novel architecture, state-of-the-art language modeling performance, or semantic understanding from attention maps.
