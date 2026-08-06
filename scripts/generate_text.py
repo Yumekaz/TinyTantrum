@@ -24,7 +24,7 @@ def main() -> None:
     parser.add_argument("--tokens", type=int, default=400)
     parser.add_argument("--temperature", type=float, default=0.8)
     parser.add_argument("--top-k", type=int, default=20)
-    parser.add_argument("--checkpoint", type=Path, default=Path("checkpoints/full_run.pt"))
+    parser.add_argument("--checkpoint", type=Path, default=Path("artifacts/checkpoints/full_run_best.pt"))
     parser.add_argument("--seed", type=int, default=1337)
     args = parser.parse_args()
 

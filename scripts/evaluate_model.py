@@ -20,7 +20,7 @@ from tinytrantrum.training import TrainingConfig, build_optimizer, estimate_loss
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Evaluate a TinyTantrum checkpoint")
-    parser.add_argument("--checkpoint", type=Path, default=Path("checkpoints/full_run.pt"))
+    parser.add_argument("--checkpoint", type=Path, default=Path("artifacts/checkpoints/full_run_best.pt"))
     parser.add_argument("--batches", type=int, default=200)
     parser.add_argument("--seed", type=int, default=1337)
     parser.add_argument("--layers", type=int, default=6)

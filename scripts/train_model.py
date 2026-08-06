@@ -28,7 +28,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--embedding-size", type=int, default=384)
     parser.add_argument("--dropout", type=float, default=0.2)
     parser.add_argument("--seed", type=int, default=1337)
-    parser.add_argument("--checkpoint", type=Path, default=Path("checkpoints/latest.pt"))
+    parser.add_argument("--checkpoint", type=Path, default=Path("artifacts/checkpoints/latest.pt"))
     parser.add_argument("--metrics", type=Path, default=Path("runs/metrics.json"))
     parser.add_argument("--checkpoint-interval", type=int, default=250)
     parser.add_argument("--resume", action="store_true")

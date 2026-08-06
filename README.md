@@ -46,6 +46,17 @@ python scripts\generate_attention_report.py
 
 This writes [results/attention/report.md](results/attention/report.md), measurable head statistics, and selected heatmaps. The report distinguishes attention behavior from semantic claims.
 
+The dashboard’s final working-state capture is [results/dashboard_screenshot.png](results/dashboard_screenshot.png).
+
+Package the large local checkpoints separately from the source repository:
+
+```powershell
+python scripts\package_artifacts.py
+```
+
+This creates `dist\tinytrantrum-checkpoints.zip`. Upload that archive as a release
+asset, then extract it so the checkpoints live under `artifacts\checkpoints\`.
+
 ## What is implemented
 
 - Deterministic character tokenizer and corpus split
@@ -72,19 +83,19 @@ python scripts\train_model.py --steps 20 --layers 1 --heads 2 --embedding-size 6
 The full reference run is intended for a GPU:
 
 ```bash
-python scripts/train_model.py --steps 5000 --batch-size 64 --context-length 256 --layers 6 --heads 6 --embedding-size 384 --dropout 0.2 --seed 1337 --checkpoint checkpoints/full_run.pt --metrics runs/full_run_metrics.json
+python scripts/train_model.py --steps 5000 --batch-size 64 --context-length 256 --layers 6 --heads 6 --embedding-size 384 --dropout 0.2 --seed 1337 --checkpoint artifacts/checkpoints/full_run.pt --metrics runs/full_run_metrics.json
 ```
 
 Evaluate a best checkpoint with the reference-style 200-batch estimate:
 
 ```bash
-python scripts/evaluate_model.py --checkpoint checkpoints/full_run_best.pt --batches 200
+python scripts/evaluate_model.py --checkpoint artifacts/checkpoints/full_run_best.pt --batches 200
 ```
 
 Generate text:
 
 ```bash
-python scripts/generate_text.py --checkpoint checkpoints/full_run_best.pt --prompt "ROMEO:" --tokens 400 --temperature 0.8 --top-k 20
+python scripts/generate_text.py --checkpoint artifacts/checkpoints/full_run_best.pt --prompt "ROMEO:" --tokens 400 --temperature 0.8 --top-k 20
 ```
 
 Run the controlled architectural ablation on a GPU:
