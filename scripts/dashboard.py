@@ -25,6 +25,71 @@ if not CHECKPOINT_DIR.exists():
     CHECKPOINT_DIR = ROOT / "checkpoints"
 RESULTS_DIR = ROOT / "results"
 
+APP_CSS = """
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+:root {
+  --tt-bg: #0a0b0f;
+  --tt-panel: #11131a;
+  --tt-panel-2: #171a22;
+  --tt-line: #272b36;
+  --tt-text: #f4f1ea;
+  --tt-muted: #9298a6;
+  --tt-orange: #ff8a3d;
+  --tt-green: #7fe0b5;
+}
+
+body, .gradio-container { background: var(--tt-bg) !important; color: var(--tt-text) !important; }
+.gradio-container { max-width: 1380px !important; padding: 28px 34px 50px !important; font-family: 'Space Grotesk', sans-serif !important; }
+.gradio-container * { border-color: var(--tt-line) !important; }
+#hero { background: radial-gradient(circle at 85% 5%, #402311 0%, transparent 34%), linear-gradient(135deg, #171a22 0%, #0f1117 70%); border: 1px solid #303540; border-radius: 24px; padding: 34px 38px; margin-bottom: 18px; overflow: hidden; }
+#hero .eyebrow { color: var(--tt-orange); font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
+#hero h1 { font-size: clamp(38px, 6vw, 72px); letter-spacing: -.06em; line-height: .95; margin: 12px 0 14px; }
+#hero p { color: #b7bbc5; font-size: 16px; max-width: 680px; margin: 0; }
+.hero-mark { float: right; width: 116px; height: 116px; border: 1px solid #85451f; border-radius: 50%; background: repeating-radial-gradient(circle, transparent 0 10px, rgba(255,138,61,.2) 11px 12px), #27170e; box-shadow: 0 0 80px rgba(255,138,61,.18); }
+#metric-grid { gap: 12px; margin-bottom: 20px; }
+.metric-card { background: var(--tt-panel); border: 1px solid var(--tt-line); border-radius: 16px; padding: 17px 20px; min-height: 92px; }
+.metric-label { color: var(--tt-muted); font-family: 'DM Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: .09em; }
+.metric-value { color: var(--tt-text); font-size: 28px; font-weight: 600; margin-top: 8px; }
+.metric-value.orange { color: var(--tt-orange); }
+.metric-value.green { color: var(--tt-green); }
+.section-note { color: var(--tt-muted); font-size: 14px; margin: 4px 0 14px; }
+.tab-nav { background: transparent !important; border-bottom: 1px solid var(--tt-line) !important; }
+.tab-nav button { color: var(--tt-muted) !important; font-weight: 600 !important; }
+.tab-nav button.selected { color: var(--tt-orange) !important; border-bottom-color: var(--tt-orange) !important; }
+.panel { background: var(--tt-panel) !important; border: 1px solid var(--tt-line) !important; border-radius: 18px !important; }
+textarea, input { background: #0d0f14 !important; color: var(--tt-text) !important; }
+.gr-button-primary { background: var(--tt-orange) !important; color: #1b1008 !important; border: 0 !important; font-weight: 700 !important; }
+.gr-button-primary:hover { background: #ffad70 !important; }
+footer { display: none !important; }
+code, pre { font-family: 'DM Mono', monospace !important; }
+"""
+
+HERO_HTML = """
+<div id="hero">
+  <div class="hero-mark"></div>
+  <div class="eyebrow">from-scratch transformer / research console</div>
+  <h1>TinyTantrum</h1>
+  <p>Watch a tiny language model think one character at a time. Explore the benchmark, inspect attention, and sample from a checkpoint trained from random initialization.</p>
+</div>
+"""
+
+METRIC_HTML = """
+<div class="metric-card"><div class="metric-label">Best validation</div><div class="metric-value orange">1.46958</div></div>
+"""
+
+METRIC_REFERENCE_HTML = """
+<div class="metric-card"><div class="metric-label">Reference target</div><div class="metric-value">1.46970</div></div>
+"""
+
+METRIC_SEED_HTML = """
+<div class="metric-card"><div class="metric-label">Independent seed</div><div class="metric-value green">1.47926</div></div>
+"""
+
+METRIC_STATUS_HTML = """
+<div class="metric-card"><div class="metric-label">Benchmark status</div><div class="metric-value green">PASS</div></div>
+"""
+
 
 def checkpoint_choices() -> list[str]:
     return sorted(path.name for path in CHECKPOINT_DIR.glob("*_best.pt"))
@@ -94,7 +159,7 @@ def ablation_table() -> list[list[object]]:
     return [[row["context_length"], row["best"]["validation"], row["best"]["step"]] for row in records]
 
 
-def main() -> None:
+def build_demo():
     try:
         import gradio as gr
     except ImportError as error:
@@ -105,40 +170,55 @@ def main() -> None:
         raise SystemExit(f"No best checkpoints found in {CHECKPOINT_DIR}")
     default_checkpoint = "full_run_best.pt" if "full_run_best.pt" in choices else choices[0]
 
-    with gr.Blocks(title="TinyTantrum") as demo:
-        gr.Markdown(
-            "# TinyTantrum\n"
-            "### A from-scratch character-level transformer laboratory\n"
-            "Benchmark: **1.46958** validation loss against the **1.4697** reference."
-        )
-        with gr.Tab("Generate"):
-            with gr.Row():
-                prompt = gr.Textbox(value="ROMEO:", label="Prompt", lines=2)
-                checkpoint = gr.Dropdown(choices=choices, value=default_checkpoint, label="Checkpoint")
-            with gr.Row():
-                token_count = gr.Slider(20, 800, value=300, step=10, label="New characters")
-                temperature = gr.Slider(0.2, 1.5, value=0.8, step=0.05, label="Temperature")
-                top_k = gr.Slider(1, 65, value=20, step=1, label="Top-k")
-            generate_button = gr.Button("Generate", variant="primary")
-            generated = gr.Textbox(label="Generated text", lines=18)
-            generate_button.click(generate_text, [prompt, token_count, temperature, top_k, checkpoint], generated)
-        with gr.Tab("Evidence"):
-            gr.Markdown("## Reference training curve")
-            gr.Plot(value=loss_plot())
-            gr.Markdown("## Context-length ablation\nLower validation loss is better.")
-            gr.Dataframe(headers=["Context length", "Best validation loss", "Best step"], value=ablation_table(), interactive=False)
-        with gr.Tab("Attention"):
-            attention_prompt = gr.Textbox(value="ROMEO: The night is calm", label="Text to inspect")
-            with gr.Row():
-                attention_checkpoint = gr.Dropdown(choices=choices, value=default_checkpoint, label="Checkpoint")
-                layer = gr.Number(value=5, precision=0, label="Layer")
-                head = gr.Number(value=0, precision=0, label="Head")
-            attention_button = gr.Button("Inspect attention")
-            attention_image = gr.Plot(label="Attention heatmap")
-            attention_button.click(attention_plot, [attention_prompt, layer, head, attention_checkpoint], attention_image)
-        gr.Markdown("TinyTantrum is a small character-level model; generated text is qualitative evidence, not the benchmark.")
+    with gr.Blocks(title="TinyTantrum · Research Console") as demo:
+        gr.HTML(HERO_HTML)
+        with gr.Row(elem_id="metric-grid"):
+            gr.HTML(METRIC_HTML)
+            gr.HTML(METRIC_REFERENCE_HTML)
+            gr.HTML(METRIC_SEED_HTML)
+            gr.HTML(METRIC_STATUS_HTML)
+        with gr.Tabs():
+            with gr.Tab("Generate", id="generate"):
+                gr.Markdown("## Sample from a trained checkpoint", elem_classes="section-note")
+                with gr.Row():
+                    with gr.Column(scale=5, elem_classes="panel"):
+                        prompt = gr.Textbox(value="ROMEO:", label="Prompt", lines=3, placeholder="Give the model a character-level opening...")
+                        checkpoint = gr.Dropdown(choices=choices, value=default_checkpoint, label="Checkpoint")
+                        with gr.Row():
+                            token_count = gr.Slider(20, 800, value=300, step=10, label="New characters")
+                            temperature = gr.Slider(0.2, 1.5, value=0.8, step=0.05, label="Temperature")
+                            top_k = gr.Slider(1, 65, value=20, step=1, label="Top-k")
+                        generate_button = gr.Button("Generate continuation", variant="primary")
+                    with gr.Column(scale=7, elem_classes="panel"):
+                        generated = gr.Textbox(label="Model continuation", lines=19, buttons=["copy"])
+                generate_button.click(generate_text, [prompt, token_count, temperature, top_k, checkpoint], generated)
+            with gr.Tab("Evidence", id="evidence"):
+                gr.Markdown("## The run behind the result\nThe model reached the reference target on a held-out validation split. Lower is better.", elem_classes="section-note")
+                gr.Plot(value=loss_plot(), show_label=False)
+                gr.Markdown("## Context-length ablation", elem_classes="section-note")
+                gr.Dataframe(headers=["Context length", "Best validation loss", "Best step"], value=ablation_table(), interactive=False)
+            with gr.Tab("Attention", id="attention"):
+                gr.Markdown("## Inspect what a head attends to\nThe map is extracted from the same causal attention mechanism used during training.", elem_classes="section-note")
+                with gr.Row():
+                    with gr.Column(scale=4, elem_classes="panel"):
+                        attention_prompt = gr.Textbox(value="ROMEO: The night is calm", label="Text to inspect", lines=3)
+                        attention_checkpoint = gr.Dropdown(choices=choices, value=default_checkpoint, label="Checkpoint")
+                        with gr.Row():
+                            layer = gr.Number(value=5, precision=0, label="Layer")
+                            head = gr.Number(value=0, precision=0, label="Head")
+                        attention_button = gr.Button("Inspect attention", variant="primary")
+                    with gr.Column(scale=8, elem_classes="panel"):
+                        attention_image = gr.Plot(label="Attention heatmap", show_label=False)
+                attention_button.click(attention_plot, [attention_prompt, layer, head, attention_checkpoint], attention_image)
+        gr.Markdown("TinyTantrum / character-level modeling / benchmark evidence over vibes", elem_classes="section-note")
 
-    demo.launch()
+    return demo
+
+
+def main() -> None:
+    import gradio as gr
+
+    build_demo().launch(theme=gr.themes.Base(primary_hue="orange", secondary_hue="slate", neutral_hue="slate"), css=APP_CSS)
 
 
 if __name__ == "__main__":
