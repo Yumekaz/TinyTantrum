@@ -9,6 +9,13 @@ import torch
 from .model import CharacterTransformer
 
 
+def _byte_tensor(value: Any) -> torch.Tensor:
+    """Normalize RNG state across PyTorch versions and serialization formats."""
+    if torch.is_tensor(value):
+        return value.detach().to(device="cpu", dtype=torch.uint8).contiguous()
+    return torch.tensor(value, dtype=torch.uint8)
+
+
 def save_checkpoint(
     path: Path,
     model: CharacterTransformer,
@@ -51,9 +58,9 @@ def load_checkpoint(
     model.load_state_dict(state["model"])
     optimizer.load_state_dict(state["optimizer"])
     random.setstate(state["python_rng"])
-    torch.set_rng_state(state["torch_rng"])
+    torch.set_rng_state(_byte_tensor(state["torch_rng"]))
     if torch.cuda.is_available() and state["cuda_rng"] is not None:
-        torch.cuda.set_rng_state_all(state["cuda_rng"])
+        torch.cuda.set_rng_state_all([_byte_tensor(value) for value in state["cuda_rng"]])
     if data_generator is not None and state.get("data_rng") is not None:
         data_generator.set_state(state["data_rng"])
     return {

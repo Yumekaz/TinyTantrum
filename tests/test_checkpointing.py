@@ -56,3 +56,15 @@ def test_checkpoint_replace_is_atomic(tmp_path: Path) -> None:
     save_checkpoint(path, model, optimizer, step=0, best_validation_loss=None)
     assert path.exists()
     assert not path.with_suffix(".pt.tmp").exists()
+
+
+def test_checkpoint_load_normalizes_serialized_rng_list(tmp_path: Path) -> None:
+    model = build_model()
+    optimizer = torch.optim.AdamW(model.parameters())
+    path = tmp_path / "legacy.pt"
+    save_checkpoint(path, model, optimizer, step=1, best_validation_loss=None)
+    state = torch.load(path, map_location="cpu", weights_only=False)
+    state["torch_rng"] = state["torch_rng"].tolist()
+    torch.save(state, path)
+    result = load_checkpoint(path, build_model(), torch.optim.AdamW(build_model().parameters()))
+    assert result["step"] == 1
