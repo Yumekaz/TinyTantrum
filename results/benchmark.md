@@ -20,3 +20,17 @@ Status: **benchmark pass**.
 The model also generated structured Shakespeare-like text from the prompt `ROMEO:`. Generated text is reported as a qualitative demonstration, not as the primary metric.
 
 Hardware, runtime, PyTorch version, and the raw checkpoint should be attached to the final release record when publishing the run.
+
+## Context-length ablation
+
+Three matched runs used the same model, optimizer, seed, and 2,000 training steps while changing only the context length:
+
+| Context length | Best validation loss | Best step |
+| ---: | ---: | ---: |
+| 64 | 1.5546164 | 2,000 |
+| 128 | 1.4857790 | 2,000 |
+| 256 | 1.4755781 | 1,750 |
+
+The 256-character context performed best, improving validation loss by approximately 5.1% relative to context 64 and 0.7% relative to context 128. This supports the hypothesis that longer context helps this character-level model capture useful dependencies.
+
+This comparison controls training steps, not total compute or tokens processed. The result therefore shows an empirical relationship under a fixed-step budget, not a claim that context 256 is universally compute-optimal.
