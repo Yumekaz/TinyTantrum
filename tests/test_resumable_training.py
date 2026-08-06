@@ -33,3 +33,4 @@ def test_interrupted_and_resumed_run_matches_uninterrupted_run(tmp_path: Path) -
 
     for name, expected in uninterrupted.state_dict().items():
         assert torch.equal(expected, interrupted.state_dict()[name]), name
+    assert (tmp_path / "resume_best.pt").exists()

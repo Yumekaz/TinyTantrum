@@ -151,6 +151,7 @@ def train_resumable(
     device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     optimizer = build_optimizer(model, config)
+    best_checkpoint_path = checkpoint_path.with_name(f"{checkpoint_path.stem}_best{checkpoint_path.suffix}")
     generator = torch.Generator().manual_seed(config.seed)
     start_step = 0
     best_validation_loss = None
@@ -189,6 +190,15 @@ def train_resumable(
             progress.update({"train_loss": metrics["train"], "validation_loss": metrics["validation"]})
             if best_validation_loss is None or metrics["validation"] < best_validation_loss:
                 best_validation_loss = metrics["validation"]
+                save_checkpoint(
+                    best_checkpoint_path,
+                    model,
+                    optimizer,
+                    step=current_step,
+                    best_validation_loss=best_validation_loss,
+                    metadata={"training_config": config.__dict__, "best": True},
+                    data_generator=generator,
+                )
         if progress_callback and (current_step % config.log_interval == 0 or current_step == total_steps):
             progress_callback(progress)
         if current_step % checkpoint_interval == 0 or current_step == total_steps:
