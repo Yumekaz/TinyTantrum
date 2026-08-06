@@ -25,6 +25,17 @@ The context-length ablation also showed a clear trend under a fixed 2,000-step b
 
 See the detailed evidence in [results/benchmark.md](results/benchmark.md).
 
+The reproducibility record is regenerated with:
+
+```powershell
+python scripts\write_reproducibility_record.py
+```
+
+It writes [results/reproducibility.json](results/reproducibility.json) and
+[results/release_report.md](results/release_report.md) with dataset provenance,
+configuration, parameter count, environment facts, artifact hashes, and known
+provenance limits.
+
 ## What is implemented
 
 - Deterministic character tokenizer and corpus split

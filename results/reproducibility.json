@@ -1,0 +1,101 @@
+{
+  "record_version": 1,
+  "source_commit": "925187376dd3dc9cf6232a2f56eabc3d1c037df2",
+  "working_tree_clean": true,
+  "dataset": {
+    "name": "tinyshakespeare.txt",
+    "url": "https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt",
+    "path": "data\\tinyshakespeare.txt",
+    "bytes": 1115394,
+    "sha256": "86c4e6aa9db7c042ec79f339dcb96d42b0075e16b8fc2e86bf0ca57e2dc565ed",
+    "characters": 65,
+    "total_characters": 1115394,
+    "train_characters": 1003854,
+    "validation_characters": 111540,
+    "train_fraction": 0.9
+  },
+  "model": {
+    "vocabulary_size": 65,
+    "context_length": 256,
+    "layers": 6,
+    "heads": 6,
+    "embedding_size": 384,
+    "dropout": 0.2,
+    "parameters": 10770816,
+    "attention_kernel": "PyTorch scaled_dot_product_attention when available; manual causal fallback is implemented"
+  },
+  "training": {
+    "batch_size": 64,
+    "learning_rate": 0.001,
+    "min_learning_rate": 0.0001,
+    "weight_decay": 0.1,
+    "beta1": 0.9,
+    "beta2": 0.99,
+    "gradient_clip": 1.0,
+    "warmup_steps": 100,
+    "decay_steps": 5000,
+    "validation_interval": 250,
+    "validation_batches": 20,
+    "steps": 5000,
+    "seed": 1337,
+    "precision": "torch default dtype; no autocast"
+  },
+  "results": {
+    "reference": {
+      "validation_loss": 1.473036539554596,
+      "training_loss": 1.091184878349304,
+      "step": 1750
+    },
+    "independent_seed": {
+      "validation_loss": 1.4847313821315766,
+      "training_loss": 1.135378795862198,
+      "step": 1500
+    },
+    "reference_evaluation": {
+      "batches": 200,
+      "validation_loss": 1.4695779329538345
+    }
+  },
+  "environment_snapshot": {
+    "scope": "environment where this record was generated; historical training hardware was not serialized",
+    "python": "3.12.1",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "torch": "2.13.0+cpu",
+    "cuda_available": false,
+    "cuda_version": null,
+    "device": "cpu",
+    "device_name": "CPU",
+    "default_dtype": "torch.float32",
+    "autocast": "not used"
+  },
+  "artifacts": {
+    "metrics": {
+      "path": "results\\full_run_metrics.json",
+      "exists": true,
+      "bytes": 2854,
+      "sha256": "b9fcd2899d802b38b4748b50f3f4ecf37043a5c64ce384e1a87b587084513f28"
+    },
+    "seed_metrics": {
+      "path": "results\\seed_2024_metrics.json",
+      "exists": true,
+      "bytes": 2851,
+      "sha256": "9670ea65af530e9f77994f8edd81ef00e03df6508b79d4e97b9047903fe6084a"
+    },
+    "loss_curve": {
+      "path": "results\\loss_curve.png",
+      "exists": true,
+      "bytes": 71560,
+      "sha256": "673582fe66390101366ab7e9006c964b5c533806a33f414377196ed89a37eef5"
+    },
+    "checkpoint": {
+      "path": "artifacts\\checkpoints\\full_run_best.pt",
+      "exists": true,
+      "bytes": 130964900,
+      "sha256": "351d2617a24f8b8b69b3d19a44f4a52ac81cafa0de8c3c48642ecc437806ee00"
+    }
+  },
+  "not_recorded": [
+    "Historical training wall-clock duration was not captured in the saved metrics.",
+    "The raw checkpoint is intentionally local/ignored and must be supplied separately for a clean-clone rerun."
+  ]
+}
