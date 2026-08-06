@@ -45,6 +45,7 @@ provenance limits.
 - Exact interrupted-vs-uninterrupted resume verification
 - Independent evaluation and autoregressive generation commands
 - Context-length ablation tooling
+- Controlled positional-embedding ablation tooling
 - Optional attention inspection and interactive dashboard
 
 ## Run locally
@@ -74,6 +75,14 @@ Generate text:
 ```bash
 python scripts/generate_text.py --checkpoint checkpoints/full_run_best.pt --prompt "ROMEO:" --tokens 400 --temperature 0.8 --top-k 20
 ```
+
+Run the controlled architectural ablation on a GPU:
+
+```bash
+python scripts/run_architecture_ablation.py --steps 2000 --batch-size 64 --context-length 256 --layers 6 --heads 6 --embedding-size 384 --dropout 0.2 --seed 1337
+```
+
+The results are written to `runs/architecture_ablation/`.
 
 ## Dashboard
 

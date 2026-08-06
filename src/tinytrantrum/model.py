@@ -17,6 +17,7 @@ class ModelConfig:
     embedding_size: int = 384
     dropout: float = 0.2
     use_flash_attention: bool = True
+    use_position_embedding: bool = True
 
     def __post_init__(self) -> None:
         if self.vocabulary_size <= 0:
@@ -136,7 +137,11 @@ class CharacterTransformer(nn.Module):
         super().__init__()
         self.config = config
         self.token_embedding = Embedding(config.vocabulary_size, config.embedding_size)
-        self.position_embedding = Embedding(config.context_length, config.embedding_size)
+        self.position_embedding = (
+            Embedding(config.context_length, config.embedding_size)
+            if config.use_position_embedding
+            else None
+        )
         self.dropout = nn.Dropout(config.dropout)
         self.blocks = nn.ModuleList([TransformerBlock(config) for _ in range(config.layers)])
         self.final_norm = LayerNorm(config.embedding_size)
@@ -157,7 +162,10 @@ class CharacterTransformer(nn.Module):
         if length > self.config.context_length:
             raise ValueError("Sequence length exceeds context_length")
         positions = torch.arange(length, device=tokens.device)
-        hidden = self.dropout(self.token_embedding(tokens) + self.position_embedding(positions))
+        hidden = self.token_embedding(tokens)
+        if self.position_embedding is not None:
+            hidden = hidden + self.position_embedding(positions)
+        hidden = self.dropout(hidden)
         attention_maps: list[Tensor] = []
         for block in self.blocks:
             block_result = block(hidden, return_weights=return_attention)
