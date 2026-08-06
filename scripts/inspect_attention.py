@@ -18,9 +18,14 @@ from tinytrantrum.tokenizer import CharacterTokenizer
 from tinytrantrum.training import TrainingConfig, build_optimizer
 
 
+DEFAULT_CHECKPOINT = Path("artifacts/checkpoints/full_run_best.pt")
+if not DEFAULT_CHECKPOINT.exists():
+    DEFAULT_CHECKPOINT = Path("checkpoints/full_run_best.pt")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Render an attention heatmap")
-    parser.add_argument("--checkpoint", type=Path, default=Path("artifacts/checkpoints/full_run_best.pt"))
+    parser.add_argument("--checkpoint", type=Path, default=DEFAULT_CHECKPOINT)
     parser.add_argument("--prompt", default="ROMEO: The night is calm")
     parser.add_argument("--output", type=Path, default=Path("results/attention_heatmap.png"))
     parser.add_argument("--layer", type=int, default=-1)

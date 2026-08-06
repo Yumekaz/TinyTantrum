@@ -21,6 +21,8 @@ from tinytrantrum.training import TrainingConfig, build_optimizer
 
 
 CHECKPOINT_DIR = ROOT / "artifacts" / "checkpoints"
+if not CHECKPOINT_DIR.exists():
+    CHECKPOINT_DIR = ROOT / "checkpoints"
 RESULTS_DIR = ROOT / "results"
 
 
