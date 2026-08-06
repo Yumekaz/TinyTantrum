@@ -1,0 +1,371 @@
+{
+  "checkpoint": "artifacts/checkpoints/full_run_best.pt",
+  "prompt": "ROMEO:\nBut soft, what light through yonder window breaks?\n",
+  "device": "cpu",
+  "layers": 6,
+  "heads_per_layer": 6,
+  "tokens": 58,
+  "local_window": 4,
+  "long_range_distance": 8,
+  "causal_future_mass_max": 0.0,
+  "head_statistics": [
+    {
+      "layer": 0,
+      "head": 0,
+      "self_mass": 0.03217170014977455,
+      "previous_token_mass": 0.00708877993747592,
+      "local_window_mass": 0.9494564533233643,
+      "long_range_mass": 0.017214829102158546,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 0,
+      "head": 1,
+      "self_mass": 0.059997234493494034,
+      "previous_token_mass": 0.49396461248397827,
+      "local_window_mass": 0.7697153687477112,
+      "long_range_mass": 0.14223764836788177,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 0,
+      "head": 2,
+      "self_mass": 0.017659811303019524,
+      "previous_token_mass": 0.9635816216468811,
+      "local_window_mass": 0.9474119544029236,
+      "long_range_mass": 0.017504680901765823,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 0,
+      "head": 3,
+      "self_mass": 0.02621597610414028,
+      "previous_token_mass": 0.04560334235429764,
+      "local_window_mass": 0.8571429252624512,
+      "long_range_mass": 0.09402784705162048,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 0,
+      "head": 4,
+      "self_mass": 0.07195800542831421,
+      "previous_token_mass": 0.941260039806366,
+      "local_window_mass": 0.9260528683662415,
+      "long_range_mass": 0.0015021332073956728,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 0,
+      "head": 5,
+      "self_mass": 0.09308867156505585,
+      "previous_token_mass": 0.3909560739994049,
+      "local_window_mass": 0.7178311347961426,
+      "long_range_mass": 0.1577610820531845,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 1,
+      "head": 0,
+      "self_mass": 0.06224849447607994,
+      "previous_token_mass": 0.058373305946588516,
+      "local_window_mass": 0.20621779561042786,
+      "long_range_mass": 0.6139328479766846,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 1,
+      "head": 1,
+      "self_mass": 0.08456523716449738,
+      "previous_token_mass": 0.07301174104213715,
+      "local_window_mass": 0.23761697113513947,
+      "long_range_mass": 0.5456341505050659,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 1,
+      "head": 2,
+      "self_mass": 0.06930233538150787,
+      "previous_token_mass": 0.06420501321554184,
+      "local_window_mass": 0.2570285499095917,
+      "long_range_mass": 0.5301091074943542,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 1,
+      "head": 3,
+      "self_mass": 0.06443195044994354,
+      "previous_token_mass": 0.06562722474336624,
+      "local_window_mass": 0.22890980541706085,
+      "long_range_mass": 0.5788248181343079,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 1,
+      "head": 4,
+      "self_mass": 0.05879070609807968,
+      "previous_token_mass": 0.8464711904525757,
+      "local_window_mass": 0.8592357039451599,
+      "long_range_mass": 0.06379500776529312,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 1,
+      "head": 5,
+      "self_mass": 0.061674512922763824,
+      "previous_token_mass": 0.11223087459802628,
+      "local_window_mass": 0.2968590259552002,
+      "long_range_mass": 0.5036233067512512,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 2,
+      "head": 0,
+      "self_mass": 0.0751231461763382,
+      "previous_token_mass": 0.055936288088560104,
+      "local_window_mass": 0.3391047418117523,
+      "long_range_mass": 0.3959699869155884,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 2,
+      "head": 1,
+      "self_mass": 0.06759995222091675,
+      "previous_token_mass": 0.156989187002182,
+      "local_window_mass": 0.6323956251144409,
+      "long_range_mass": 0.15474969148635864,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 2,
+      "head": 2,
+      "self_mass": 0.070501409471035,
+      "previous_token_mass": 0.052582260221242905,
+      "local_window_mass": 0.23171469569206238,
+      "long_range_mass": 0.5573036074638367,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 2,
+      "head": 3,
+      "self_mass": 0.055238060653209686,
+      "previous_token_mass": 0.3280225098133087,
+      "local_window_mass": 0.7204012274742126,
+      "long_range_mass": 0.1476946920156479,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 2,
+      "head": 4,
+      "self_mass": 0.05937020108103752,
+      "previous_token_mass": 0.09793016314506531,
+      "local_window_mass": 0.48363688588142395,
+      "long_range_mass": 0.2734681963920593,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 2,
+      "head": 5,
+      "self_mass": 0.0590498186647892,
+      "previous_token_mass": 0.36446696519851685,
+      "local_window_mass": 0.7211931347846985,
+      "long_range_mass": 0.13629767298698425,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 3,
+      "head": 0,
+      "self_mass": 0.07223319262266159,
+      "previous_token_mass": 0.08880116790533066,
+      "local_window_mass": 0.34426039457321167,
+      "long_range_mass": 0.4013482332229614,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 3,
+      "head": 1,
+      "self_mass": 0.07774648070335388,
+      "previous_token_mass": 0.07366719096899033,
+      "local_window_mass": 0.2982923686504364,
+      "long_range_mass": 0.45641255378723145,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 3,
+      "head": 2,
+      "self_mass": 0.07427871972322464,
+      "previous_token_mass": 0.18015232682228088,
+      "local_window_mass": 0.536388635635376,
+      "long_range_mass": 0.26296931505203247,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 3,
+      "head": 3,
+      "self_mass": 0.06774870306253433,
+      "previous_token_mass": 0.1893722265958786,
+      "local_window_mass": 0.5172376036643982,
+      "long_range_mass": 0.24332289397716522,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 3,
+      "head": 4,
+      "self_mass": 0.0901961624622345,
+      "previous_token_mass": 0.10327162593603134,
+      "local_window_mass": 0.4208691120147705,
+      "long_range_mass": 0.3110193908214569,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 3,
+      "head": 5,
+      "self_mass": 0.07008755952119827,
+      "previous_token_mass": 0.09044118225574493,
+      "local_window_mass": 0.4046347439289093,
+      "long_range_mass": 0.34364134073257446,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 4,
+      "head": 0,
+      "self_mass": 0.07182289659976959,
+      "previous_token_mass": 0.10345713794231415,
+      "local_window_mass": 0.3387703597545624,
+      "long_range_mass": 0.43622806668281555,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 4,
+      "head": 1,
+      "self_mass": 0.06305500119924545,
+      "previous_token_mass": 0.06796488165855408,
+      "local_window_mass": 0.24650876224040985,
+      "long_range_mass": 0.5740324258804321,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 4,
+      "head": 2,
+      "self_mass": 0.0747232660651207,
+      "previous_token_mass": 0.12342770397663116,
+      "local_window_mass": 0.38057228922843933,
+      "long_range_mass": 0.4234515428543091,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 4,
+      "head": 3,
+      "self_mass": 0.07402890175580978,
+      "previous_token_mass": 0.09627669304609299,
+      "local_window_mass": 0.3565962314605713,
+      "long_range_mass": 0.44576701521873474,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 4,
+      "head": 4,
+      "self_mass": 0.05552276596426964,
+      "previous_token_mass": 0.07580253481864929,
+      "local_window_mass": 0.34046924114227295,
+      "long_range_mass": 0.43468743562698364,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 4,
+      "head": 5,
+      "self_mass": 0.10010290145874023,
+      "previous_token_mass": 0.0896487906575203,
+      "local_window_mass": 0.3619537949562073,
+      "long_range_mass": 0.4032512307167053,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 5,
+      "head": 0,
+      "self_mass": 0.061038535088300705,
+      "previous_token_mass": 0.080766960978508,
+      "local_window_mass": 0.19028206169605255,
+      "long_range_mass": 0.6235179901123047,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 5,
+      "head": 1,
+      "self_mass": 0.07056789845228195,
+      "previous_token_mass": 0.06577987968921661,
+      "local_window_mass": 0.19137854874134064,
+      "long_range_mass": 0.6420267224311829,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 5,
+      "head": 2,
+      "self_mass": 0.07162180542945862,
+      "previous_token_mass": 0.0876293033361435,
+      "local_window_mass": 0.28851982951164246,
+      "long_range_mass": 0.48800984025001526,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 5,
+      "head": 3,
+      "self_mass": 0.09382550418376923,
+      "previous_token_mass": 0.13895249366760254,
+      "local_window_mass": 0.29238566756248474,
+      "long_range_mass": 0.50017249584198,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 5,
+      "head": 4,
+      "self_mass": 0.09377117455005646,
+      "previous_token_mass": 0.049699388444423676,
+      "local_window_mass": 0.15428608655929565,
+      "long_range_mass": 0.6586645841598511,
+      "future_mass": 0.0
+    },
+    {
+      "layer": 5,
+      "head": 5,
+      "self_mass": 0.05109153687953949,
+      "previous_token_mass": 0.052404750138521194,
+      "local_window_mass": 0.17793795466423035,
+      "long_range_mass": 0.644906759262085,
+      "future_mass": 0.0
+    }
+  ],
+  "selected_heads": {
+    "previous_token": {
+      "layer": 0,
+      "head": 2,
+      "self_mass": 0.017659811303019524,
+      "previous_token_mass": 0.9635816216468811,
+      "local_window_mass": 0.9474119544029236,
+      "long_range_mass": 0.017504680901765823,
+      "future_mass": 0.0
+    },
+    "local_window": {
+      "layer": 0,
+      "head": 0,
+      "self_mass": 0.03217170014977455,
+      "previous_token_mass": 0.00708877993747592,
+      "local_window_mass": 0.9494564533233643,
+      "long_range_mass": 0.017214829102158546,
+      "future_mass": 0.0
+    },
+    "long_range": {
+      "layer": 5,
+      "head": 4,
+      "self_mass": 0.09377117455005646,
+      "previous_token_mass": 0.049699388444423676,
+      "local_window_mass": 0.15428608655929565,
+      "long_range_mass": 0.6586645841598511,
+      "future_mass": 0.0
+    }
+  },
+  "heatmaps": {
+    "previous_token": "previous_token_layer0_head2.png",
+    "local_window": "local_window_layer0_head0.png",
+    "long_range": "long_range_layer5_head4.png"
+  }
+}

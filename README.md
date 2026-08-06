@@ -38,6 +38,14 @@ It writes [results/reproducibility.json](results/reproducibility.json) and
 configuration, parameter count, environment facts, artifact hashes, and known
 provenance limits.
 
+Generate the attention interpretability report from the local best checkpoint:
+
+```powershell
+python scripts\generate_attention_report.py
+```
+
+This writes [results/attention/report.md](results/attention/report.md), measurable head statistics, and selected heatmaps. The report distinguishes attention behavior from semantic claims.
+
 ## What is implemented
 
 - Deterministic character tokenizer and corpus split
@@ -48,7 +56,8 @@ provenance limits.
 - Independent evaluation and autoregressive generation commands
 - Context-length ablation tooling
 - Controlled positional-embedding ablation tooling
-- Optional attention inspection and interactive dashboard
+- Attention interpretability report generation and heatmaps
+- Optional interactive dashboard
 
 ## Run locally
 
