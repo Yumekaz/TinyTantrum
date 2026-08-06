@@ -28,6 +28,7 @@ def main() -> None:
     parser.add_argument("--embedding-size", type=int, default=384)
     parser.add_argument("--context-length", type=int, default=256)
     parser.add_argument("--dropout", type=float, default=0.2)
+    parser.add_argument("--no-position-embedding", action="store_true")
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -43,6 +44,7 @@ def main() -> None:
         heads=args.heads,
         embedding_size=args.embedding_size,
         dropout=args.dropout,
+        use_position_embedding=not args.no_position_embedding,
     ))
     training_config = TrainingConfig(
         context_length=args.context_length,
