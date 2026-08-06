@@ -31,6 +31,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--checkpoint-interval", type=int, default=250)
     parser.add_argument("--validation-interval", type=int, default=250)
     parser.add_argument("--validation-batches", type=int, default=20)
+    parser.add_argument("--log-interval", type=int, default=50)
+    parser.add_argument("--resume", action="store_true")
     parser.add_argument("--output-dir", type=Path, default=Path("runs/architecture_ablation"))
     return parser.parse_args()
 
@@ -71,9 +73,40 @@ def run_variant(
         validation_interval=args.validation_interval,
         validation_batches=args.validation_batches,
         decay_steps=args.steps,
+        log_interval=args.log_interval,
     )
     model = CharacterTransformer(model_config)
     checkpoint = args.output_dir / f"{name}.pt"
+    metrics_path = args.output_dir / f"{name}_metrics.json"
+    prior_history: list[dict[str, float]] = []
+    if args.resume and metrics_path.exists():
+        prior_history = json.loads(metrics_path.read_text(encoding="utf-8"))
+
+    def report(progress: dict[str, float]) -> None:
+        fields = [
+            f"[{name}] step={int(progress['step'])}/{args.steps}",
+            f"batch_loss={progress['train_batch_loss']:.4f}",
+        ]
+        if "train_loss" in progress:
+            row = {
+                "train": float(progress["train_loss"]),
+                "validation": float(progress["validation_loss"]),
+                "step": float(progress["step"]),
+                "learning_rate": float(progress["learning_rate"]),
+            }
+            prior_history[:] = [item for item in prior_history if item["step"] != row["step"]]
+            prior_history.append(row)
+            metrics_path.write_text(json.dumps(sorted(prior_history, key=lambda item: item["step"]), indent=2) + "\n", encoding="utf-8")
+            fields.extend([
+                f"train={progress['train_loss']:.4f}",
+                f"validation={progress['validation_loss']:.4f}",
+            ])
+        fields.extend([
+            f"lr={progress['learning_rate']:.2e}",
+            f"elapsed={progress['elapsed_seconds']:.1f}s",
+        ])
+        print(" | ".join(fields), flush=True)
+
     started_at = time.perf_counter()
     history = train_resumable(
         model,
@@ -84,15 +117,24 @@ def run_variant(
         checkpoint,
         checkpoint_interval=args.checkpoint_interval,
         device=device,
+        resume=args.resume,
+        progress_callback=report,
     )
     elapsed = time.perf_counter() - started_at
+    combined_history = prior_history + history
+    deduplicated_history = {
+        int(row["step"]): row for row in combined_history
+    }
+    history = [deduplicated_history[step] for step in sorted(deduplicated_history)]
+    if not history:
+        raise RuntimeError(f"No metrics available for {name}; rerun without --resume or keep the metrics file beside the checkpoint")
     return {
         "variant": name,
         "use_position_embedding": use_position_embedding,
         "parameters": sum(parameter.numel() for parameter in model.parameters()),
         "best": best_result(history),
         "elapsed_seconds": elapsed,
-        "metrics_path": str((args.output_dir / f"{name}_metrics.json").as_posix()),
+        "metrics_path": str(metrics_path.as_posix()),
         "checkpoint_path": str(checkpoint.as_posix()),
         "config": {
             "seed": args.seed,
