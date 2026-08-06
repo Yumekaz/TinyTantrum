@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 import json
+import os
 from pathlib import Path
 import sys
 
@@ -218,7 +219,13 @@ def build_demo():
 def main() -> None:
     import gradio as gr
 
-    build_demo().launch(theme=gr.themes.Base(primary_hue="orange", secondary_hue="slate", neutral_hue="slate"), css=APP_CSS)
+    port = int(os.environ.get("TINYTRANTRUM_PORT", "7861"))
+    build_demo().launch(
+        server_name="127.0.0.1",
+        server_port=port,
+        theme=gr.themes.Base(primary_hue="orange", secondary_hue="slate", neutral_hue="slate"),
+        css=APP_CSS,
+    )
 
 
 if __name__ == "__main__":
